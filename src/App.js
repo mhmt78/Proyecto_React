@@ -3,6 +3,7 @@ import '../node_modules/bootstrap/dist/css/bootstrap.css'
 import Place from './Place';
 import Horario from './Horario';
 import Reviews from './Reviews';
+import Rating from './Rating';
 import GoogleLogin from './GoogleLogin';
 
 class App extends Component {
@@ -95,14 +96,24 @@ class App extends Component {
         address:place.formatted_address,photos:placePhotos}
       const placesTemp = <Place placeData={placeTemp}/>;
       const placeHorarios = <Horario horarios={place.opening_hours}/>
-      this.setState({places:placesTemp,
-                     placeHorarios:placeHorarios})
-      this.showMap(place.geometry.location);
+      var rating = ''
+      if (place.rating) {
+        rating = <Rating placeRating={place.rating} />
+      }
+      else {
+        rating = <div key={1} className='row mt-2 mb-1 pl-3' >
+        </div>;
+      }
 
-      
-      
-      this.setState({places:placesTemp,
-        placeReviews:<Reviews placeReviews={place.reviews} />})
+      this.setState({
+        places: placesTemp,
+        placeHorarios: placeHorarios,
+        placeReviews: <Reviews placeReviews={place.reviews} />,
+        placeRating: rating
+        
+        
+        
+      })
       this.showMap(place.geometry.location);
    } 
   }
@@ -133,6 +144,9 @@ class App extends Component {
             </div>
             {this.state.places}
             {this.state.placeHorarios}
+            <div className="container">
+                {this.state.placeRating}
+              </div>
             {this.state.placeReviews}
             <div id="map" className='mt-2' ></div>
           </div>
