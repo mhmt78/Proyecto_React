@@ -18,7 +18,7 @@ export default class GoogleLogin extends Component {
   }
 
   login = () => {
-    const clientParam = {client_id:'567815834098-0b0qg7emeean9a78jrva4m0udqi5nj5n.apps.googleusercontent.com'}
+    const clientParam = {client_id:'Cliente_Id'}
     this.gapi.auth2.init(clientParam)
     const auth = this.gapi.auth2.getAuthInstance();
     const loggedInGoogle = auth.isSignedIn.get();
