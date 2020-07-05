@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../node_modules/bootstrap/dist/css/bootstrap.css'
 import Place from './Place';
 import Horario from './Horario';
-import Comentario from './Comentario';
+import Reviews from './Reviews';
 import GoogleLogin from './GoogleLogin';
 
 class App extends Component {
@@ -77,7 +77,7 @@ class App extends Component {
       placeId: placeIdFound,
       fields: ['address_component', 'adr_address', 'alt_id', 'formatted_address','opening_hours',
        'icon', 'id', 'name', 'permanently_closed', 'photo', 'place_id', 'plus_code', 'scope', 
-       'type', 'url', 'utc_offset', 'vicinity','geometry','rating']
+       'type', 'url', 'utc_offset', 'vicinity','geometry','rating', 'reviews']
     };
     this.service.getDetails(request, this.foundPlaceDatail);
   }
@@ -100,9 +100,9 @@ class App extends Component {
       this.showMap(place.geometry.location);
 
       
-      const placeComentarios = <Comentario comentarios={place.opening_hours}/>
+      
       this.setState({places:placesTemp,
-                     placeComentarios:placeComentarios})
+        placeReviews:<Reviews placeReviews={place.reviews} />})
       this.showMap(place.geometry.location);
    } 
   }
@@ -133,7 +133,7 @@ class App extends Component {
             </div>
             {this.state.places}
             {this.state.placeHorarios}
-            {this.state.placeComentarios}
+            {this.state.placeReviews}
             <div id="map" className='mt-2' ></div>
           </div>
           <GoogleLogin loginStatus={this.loginStatus} logged={true}/>
