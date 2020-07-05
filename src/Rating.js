@@ -13,7 +13,7 @@ export default class Rating extends Component {
         <div className='col-3'><strong>Rating: </strong></div>
         <div className='col-2'><strong>{this.props.placeRating}</strong></div>
         <div className='col-6'>
-          <StarRatings rating={this.props.placeRating} starRatedColor="blue" starDimension="30px" numberOfStars={5} name='rating' />
+          <StarRatings rating={this.props.placeRating} starRatedColor="red" starDimension="30px" numberOfStars={5} name='rating' />
         </div>
       </div>      
     )

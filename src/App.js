@@ -4,12 +4,13 @@ import Place from './Place';
 import Horario from './Horario';
 import Reviews from './Reviews';
 import Rating from './Rating';
-import GoogleLogin from './GoogleLogin';
+import NearbyPlace from './NearbyPlace';
+import GoogleLogin from './GoogleLogin'
 
 class App extends Component {
   constructor(props){
     super(props);
-    this.state={photo:''}
+    this.state={photo:'', showAllNearbyPlaces: false}
   }
 
   loginStatus = (loginGoogle) => {
@@ -50,6 +51,32 @@ class App extends Component {
     this.service.findPlaceFromQuery(request, this.findPlaceResult);
   }
 
+  getNearbyPlacesOnClick = (e) => {
+    let request = {
+      location: this.state.placeLocation,
+      radius: '10000',
+    };
+
+    this.service = new this.google.maps.places.PlacesService(this.map);
+    this.service.nearbySearch(request, this.callbackSearchNearby)
+  }
+
+  callbackSearchNearby = (results, status) => {
+    if (status == this.google.maps.places.PlacesServiceStatus.OK) {
+      console.log("callback received " + results.length + " results");
+      window.lugaresCercanos = results
+      if (results.length) {
+        let nearbyPlaces = results.map((place, index) =>
+          <NearbyPlace key={index} placeData={place}
+            chooseDestination={this.changeDestination}></NearbyPlace>)
+
+        this.setState({
+          nearbyPlaces: nearbyPlaces
+        })
+      }
+    } else console.log("callback.status=" + status);
+  }
+
   findPlaceResult = (results, status) => {
     var placesTemp=[]
     var placeId = ''
@@ -69,7 +96,7 @@ class App extends Component {
           No hay resultados</strong></div>,
         address:'',photos:['']}
       placesTemp.push(<Place placeData={placeTemp}/>);
-      this.setState({places:placesTemp})
+      this.setState({places:placesTemp, showAllNearbyPlaces: false})
     }
   }
 
@@ -109,8 +136,8 @@ class App extends Component {
         places: placesTemp,
         placeHorarios: placeHorarios,
         placeReviews: <Reviews placeReviews={place.reviews} />,
-        placeRating: rating
-        
+        placeRating: rating,
+        nearbyPlaces: []
         
         
       })
@@ -148,6 +175,47 @@ class App extends Component {
                 {this.state.placeRating}
               </div>
             {this.state.placeReviews}
+            {this.state.places &&
+                <div className='row'>
+                  <div className="col-12">
+                    <button className="btn btn-info text-center" onClick={this.getNearbyPlacesOnClick}>Buscar lugares cercanos</button>
+                  </div>
+                </div>
+              }
+              <div className="row row-cols-1 row-cols-md-1 mt-2">
+                {this.state.showAllNearbyPlaces ?
+                  this.state.nearbyPlaces :
+                  this.state.nearbyPlaces?.slice(0, 9)
+                }
+              </div>
+              {this.state.nearbyPlaces &&
+                <div className="container">
+                  <div className="mb-3">
+                    <a href='#' onClick={(e) => {
+                      e.preventDefault();
+                      this.setState({ showAllNearbyPlaces: true });
+                    }}>
+                      Mostrar más lugares cercanos
+                </a>
+                  </div>
+                  <div className="row">
+                    <div className="col">
+                      <input id='origen' className="form-control" type='text' placeholder="Origen" />
+                    </div>
+                    <div className="col">
+                      <select id="mode" className="form-control">
+                        <option value="VEHICLE">Vehículo</option>
+                        <option value="TRANSPORT">Transporte Público</option>
+                        <option value="BICYCLING">Bicicleta</option>
+                        <option value="WALKING">Caminando</option>
+                      </select>
+                    </div>
+                    <div className="col">
+                      <button className="btn btn-info" onClick={this.calcRoute}>Ir al destino indicado</button>
+                    </div>
+                  </div>
+                </div>}
+
             <div id="map" className='mt-2' ></div>
           </div>
           <GoogleLogin loginStatus={this.loginStatus} logged={true}/>
