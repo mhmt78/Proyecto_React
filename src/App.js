@@ -1,51 +1,87 @@
 import React, { Component } from 'react';
+import './App.css';
 import '../node_modules/bootstrap/dist/css/bootstrap.css'
+import '../node_modules/font-awesome/css/font-awesome.css'
 import Place from './Place';
-import Horario from './Horario';
-import Reviews from './Reviews';
 import Rating from './Rating';
+import Horario from './Horario';
 import NearbyPlace from './NearbyPlace';
+import Reviews from './Reviews';
 import GoogleLogin from './GoogleLogin'
 
 class App extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
-    this.state={photo:'', showAllNearbyPlaces: false}
+    this.state = {
+      photo: '',
+      showAllNearbyPlaces: false
+    }
+     
+    this.callback = this.callback.bind(this)
+    
   }
 
   loginStatus = (loginGoogle) => {
     this.setState({logged:loginGoogle})
   };
 
-  map=''
+  map = ''
 
-  componentDidMount(){
+  componentDidMount() {
     const googlePlaceAPILoad = setInterval(() => {
-      if (window.google){
-        this.google=window.google;
+      if (window.google) {
+        this.google = window.google;
         clearInterval(googlePlaceAPILoad);
         console.log('Load Place API');
-        const mapCenter = new this.google.maps.LatLng(4.624335,-74.064644);
+        this.directionsService = new this.google.maps.DirectionsService();
+        this.directionsRenderer = new this.google.maps.DirectionsRenderer();
+        const mapCenter = new this.google.maps.LatLng(4.624335, -74.064644);
         this.map = new this.google.maps.Map(document.getElementById('gmapContainer'), {
           center: mapCenter,
           zoom: 16
         });
-        // var marcador = new this.google.maps.Marker({position:mapCenter, map:this.map})
-        this.showMap(mapCenter);
+        var request = {
+          location: this.map.getCenter(),
+          radius: '500',
+          query: 'Google Sydney'
+        };
+        var service = new this.google.maps.places.PlacesService(this.map);
+        service.textSearch(request, this.callback);
+        //var marcador = new this.google.maps.Marker({position:mapCenter, map:this.map})
+        //this.showMap(mapCenter);
       };
-    },100);
+    }, 100);
+  }
+
+  callback(results, status) {
+    if (status === this.google.maps.places.PlacesServiceStatus.OK) {
+      var marker = new this.google.maps.Marker({
+        map: this.map,
+        place: {
+          placeId: results[0].place_id,
+          location: results[0].geometry.location
+        }
+      });
+    }
   }
 
   showMap(mapCenter) {
     var map = new window.google.maps.Map(
-        document.getElementById('map'), {zoom: 16, center: mapCenter});
-    var marker = new window.google.maps.Marker({position: mapCenter, map: map});
+      document.getElementById('map'), { zoom: 16, center: mapCenter });
+    this.directionsRenderer.setMap(map);
+    var marker = new window.google.maps.Marker({ position: mapCenter, map: map });
+  }
+
+  changeDestination = (destino) => {
+    console.log(destino)
+    document.getElementById('destino').value = destino;
+    document.getElementById('btnBuscar').click();
   }
 
   manejoOnClick = (e) => {
     const request = {
-      query: document.getElementById('origen').value ,
-      fields: ['photos', 'formatted_address', 'name','place_id'],
+      query: document.getElementById('destino').value,
+      fields: ['photos', 'formatted_address', 'name', 'place_id'],
     };
     this.service = new this.google.maps.places.PlacesService(this.map);
     this.service.findPlaceFromQuery(request, this.findPlaceResult);
@@ -78,51 +114,58 @@ class App extends Component {
   }
 
   findPlaceResult = (results, status) => {
-    var placesTemp=[]
+    var placesTemp = []
     var placeId = ''
-    if (status ===  'OK') {
+    if (status === 'OK') {
       results.map((place) => {
-        var placePhotos=['']
-        const placeTemp = {id:place.place_id, name:place.name,
-          address:place.formatted_address,photos:placePhotos}
-          placeId = place.place_id;
-        placesTemp.push(<Place placeData={placeTemp}/>);
+        var placePhotos = ['']
+        const placeTemp = {
+          id: place.place_id, name: place.name,
+          address: place.formatted_address, photos: placePhotos
+        }
+        placeId = place.place_id;
+        placesTemp.push(<Place placeData={placeTemp} />);
       })
     }
-    if (placesTemp.length>0)
+    if (placesTemp.length > 0)
       this.findPlaceDetail(placeId);
-    else{
-      const placeTemp = {id:'N/A', name:<div className='mt-5'><strong className='text-center'>
+    else {
+      const placeTemp = {
+        id: 'N/A', name: <div className='mt-5'><strong className='text-center'>
           No hay resultados</strong></div>,
-        address:'',photos:['']}
-      placesTemp.push(<Place placeData={placeTemp}/>);
-      this.setState({places:placesTemp, showAllNearbyPlaces: false})
+        address: '', photos: ['']
+      }
+      placesTemp.push(<Place placeData={placeTemp} />);
+      this.setState({ places: placesTemp, showAllNearbyPlaces: false })
     }
   }
 
   findPlaceDetail = (placeIdFound) => {
     var request = {
       placeId: placeIdFound,
-      fields: ['address_component', 'adr_address', 'alt_id', 'formatted_address','opening_hours',
-       'icon', 'id', 'name', 'permanently_closed', 'photo', 'place_id', 'plus_code', 'scope', 
-       'type', 'url', 'utc_offset', 'vicinity','geometry','rating', 'reviews']
+      fields: ['address_component', 'adr_address', 'alt_id', 'formatted_address', 'opening_hours',
+        'icon', 'id', 'name', 'business_status', 'photo', 'place_id', 'plus_code', 'scope',
+        'type', 'url', 'utc_offset_minutes', 'vicinity', 'geometry', 'rating', 'reviews']
     };
     this.service.getDetails(request, this.foundPlaceDatail);
   }
 
   foundPlaceDatail = (place, status) => {
-    if (status === 'OK'){
-      var placePhotos=['']
-      if (place.photos){
+    if (status === 'OK') {
+      window.lugar = place
+      var placePhotos = ['']
+      if (place.photos) {
         place.photos.map((placePhoto, index) => {
-          placePhotos[index]=placePhoto.getUrl({'maxWidth': 160, 'maxHeight': 120})
-         // if (index === 2) return;
+          placePhotos[index] = placePhoto.getUrl({ 'maxWidth': 160, 'maxHeight': 120 })
+          if (index === 2) return;
         })
       }
-      const placeTemp = {id:place.place_id, name:place.name,
-        address:place.formatted_address,photos:placePhotos}
-      const placesTemp = <Place placeData={placeTemp}/>;
-      const placeHorarios = <Horario horarios={place.opening_hours}/>
+      const placeTemp = {
+        id: place.place_id, name: place.name,
+        address: place.formatted_address, photos: placePhotos
+      }
+      const placesTemp = <Place placeData={placeTemp} />;
+      const placeHorarios = <Horario horarios={place.opening_hours} />
       var rating = ''
       if (place.rating) {
         rating = <Rating placeRating={place.rating} />
@@ -134,48 +177,65 @@ class App extends Component {
 
       this.setState({
         places: placesTemp,
-        placeHorarios: placeHorarios,
-        placeReviews: <Reviews placeReviews={place.reviews} />,
         placeRating: rating,
-        nearbyPlaces: []
-        
-        
+        placeReviews: <Reviews placeReviews={place.reviews} />,
+        placeHorarios: placeHorarios,
+        nearbyPlaces: [],
+        placeLocation: place.geometry.location
       })
       this.showMap(place.geometry.location);
-   } 
+    }
+  }
+
+  calcRoute = (e) => {
+    var start = document.getElementById('origen').value;
+    var end = document.getElementById('destino').value;
+    var travelMode = document.getElementById('mode').value;
+    var request = {
+      origin: start,
+      destination: end,
+      travelMode: travelMode
+    };
+
+    var that = this;
+    this.directionsService.route(request, function (result, status) {
+      if (status == 'OK') {
+        that.directionsRenderer.setDirections(result);
+      }
+    });
   }
 
   render() {
     if (this.state.logged)
       return (
-        <div className="App" > 
-          <div className='container border rounded p-3 mt-4' style={{width:'50%'}}>
-            <div className='row'>
-              <div className='col-4'></div>
-              <div className='col-4 text-center'>
-                <label><strong>Indica el lugar</strong></label>
+        <div className="App">
+            <div className='container border rounded p-3 mt-4' style={{ width: '50%' }}>
+              <div className='row'>
+                <div className='col-4'></div>
+                <div className='col-4 text-center'>
+                  <label><strong>Indica el lugar</strong></label>
+                </div>
+                <div className='col-4'></div>
               </div>
-              <div className='col-4'></div>
-            </div>
-            <div className='row'>
-              <div className='col-4'></div>
-              <div className='col-4 py-2'><input id='origen' type='text'/></div>
-              <div className='col-4'></div>
-            </div>
-            <div className='row'>
-              <div className='col-4'></div>
-              <div className='col-4 text-center'>
-                <div className='btn btn-primary text-center' onClick={this.manejoOnClick}>Buscar Lugar</div>
+              <div className='row'>
+                <div className='col-3'></div>
+                <div className='col-6 text-center py-2'><input id='destino' size="40" type='text' /></div>
+                <div className='col-3'></div>
               </div>
-              <div className='col-4'></div>
-            </div>
-            {this.state.places}
-            {this.state.placeHorarios}
-            <div className="container">
+              <div className='row'>
+                <div className='col-4'></div>
+                <div className='col-4 text-center'>
+                  <div id="btnBuscar" className='btn btn-info text-center' onClick={this.manejoOnClick}>Buscar Lugar</div>
+                </div>
+                <div className='col-4'></div>
+              </div>
+              {this.state.places}
+              {this.state.placeHorarios}
+              <div className="container">
                 {this.state.placeRating}
-              </div>
-            {this.state.placeReviews}
-            {this.state.places &&
+              </div>              
+              {this.state.placeReviews}
+              {this.state.places &&
                 <div className='row'>
                   <div className="col-12">
                     <button className="btn btn-info text-center" onClick={this.getNearbyPlacesOnClick}>Buscar lugares cercanos</button>
@@ -204,10 +264,10 @@ class App extends Component {
                     </div>
                     <div className="col">
                       <select id="mode" className="form-control">
-                        <option value="VEHICLE">Vehículo</option>
-                        <option value="TRANSPORT">Transporte Público</option>
-                        <option value="BICYCLING">Bicicleta</option>
+                        <option value="DRIVING">Automóvil</option>
+                        <option value="TRANSIT">Transporte Público</option>
                         <option value="WALKING">Caminando</option>
+                        <option value="BICYCLING">Bicicleta</option>
                       </select>
                     </div>
                     <div className="col">
@@ -215,14 +275,13 @@ class App extends Component {
                     </div>
                   </div>
                 </div>}
-
-            <div id="map" className='mt-2' ></div>
-          </div>
-          <GoogleLogin loginStatus={this.loginStatus} logged={true}/>
-        </div>
+              <div id='map' className='mt-2'></div>
+            </div>
+           <GoogleLogin loginStatus={this.loginStatus} logged={true}/>
+         </div>
       );
     else
-      return (<GoogleLogin loginStatus={this.loginStatus} logged={false}/>);
+    return (<GoogleLogin loginStatus={this.loginStatus} logged={false}/>);
   }
 }
 

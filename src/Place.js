@@ -14,7 +14,7 @@ export default class Place extends Component {
         <div key={index} className={'col-'+colSize+' text-center'} >
           <img src={photo} alt={this.props.placeData.name}/>
         </div>);
-        //if (index === (cantPhotos-1)) return
+        if (index === (cantPhotos-1)) return
     })
     return (
       <div>

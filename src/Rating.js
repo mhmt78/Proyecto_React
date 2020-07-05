@@ -3,9 +3,7 @@ import '../node_modules/font-awesome/css/font-awesome.css'
 import StarRatings from '../node_modules/react-star-ratings'
 
 export default class Rating extends Component {
-  constructor(props) {
-    super(props);    
-  }
+ 
 
   render() {
     return (      
